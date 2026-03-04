@@ -71,7 +71,17 @@ app.get('/api/memories', requireAuth, async (req, res) => {
 
 app.listen(3000, () => console.log('Server running on http://localhost:3000'));
 
-// Delete a memory
+// Public shareable memory page
+app.get('/memory/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'memory.html'));
+});
+
+// Public memory API — no auth required
+app.get('/api/memory/:id', async (req, res) => {
+    const { rows } = await pool.query('SELECT * FROM memories WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Memory not found' });
+    res.json(rows[0]);
+});
 app.delete('/api/memories/:id', requireAuth, async (req, res) => {
     await pool.query('DELETE FROM memories WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     res.json({ success: true });

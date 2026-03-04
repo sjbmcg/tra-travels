@@ -51,6 +51,21 @@ function openEditModal(id) {
     document.getElementById("locationModal").style.display = "block";
 }
 
+// Share a memory
+function shareMemory(id) {
+    const url = `${window.location.origin}/memory/${id}`;
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = document.querySelector(`.blog-post[data-id="${id}"] .share-btn`);
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#d4edda';
+        setTimeout(() => {
+            btn.textContent = original;
+            btn.style.background = '';
+        }, 2000);
+    });
+}
+
 // Delete a memory
 async function deleteMemory(id) {
     if (!confirm('Delete this memory?')) return;
@@ -96,6 +111,7 @@ function createBlogPost(location) {
         <div class="post-actions">
             <button class="action-btn edit-btn" onclick="openEditModal(${location.id})">Edit</button>
             <button class="action-btn delete-btn" onclick="deleteMemory(${location.id})">Delete</button>
+            <button class="action-btn share-btn" onclick="shareMemory(${location.id})">Share</button>
         </div>
     `;
 
