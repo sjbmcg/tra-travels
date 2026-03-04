@@ -948,3 +948,151 @@ input[type="file"] {
 
 .year-btn:hover { background: #fde8f0; }
 .year-btn.active { background: var(--sakura); color: white; border-color: var(--sakura); }
+
+/* ── Comprehensive Mobile Fixes ─────────────────────────── */
+@media (max-width: 640px) {
+
+    /* Map takes 45vh, sidebar takes rest */
+    #map {
+        height: 45vh !important;
+        width: 100% !important;
+    }
+
+    #sidebar {
+        height: 55vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #blogContainer {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 16px;
+    }
+
+    /* Blog posts full width, less padding */
+    .blog-post {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+
+    .blog-photo {
+        max-height: 180px;
+    }
+
+    .blog-post h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Buttons row wraps neatly */
+    .post-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .action-btn {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+        flex: 1;
+        text-align: center;
+    }
+
+    /* Nav */
+    .memory-count {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+    }
+
+    .journey-nav-btn {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    .logout-btn {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    /* Modal full screen on mobile */
+    .modal {
+        align-items: flex-end;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    .modal[style*="block"] {
+        display: flex !important;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        border-radius: 20px 20px 0 0;
+        max-height: 85vh;
+        padding: 24px 20px;
+    }
+
+    /* Form inputs bigger touch targets */
+    .modal-content input,
+    .modal-content textarea {
+        font-size: 16px; /* prevents iOS zoom */
+        padding: 10px 14px;
+    }
+
+    .modal-content button[type="submit"] {
+        width: 100%;
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    /* Year filter scrollable on mobile */
+    .year-filter {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .year-btn {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+    }
+
+    /* Journey page */
+    .journey-container {
+        padding: 24px 16px 60px;
+    }
+
+    .journey-header h1 {
+        font-size: 2rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .memories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .play-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* About page */
+    .about-section {
+        padding: 20px;
+    }
+
+    .contributors {
+        gap: 12px;
+    }
+}
