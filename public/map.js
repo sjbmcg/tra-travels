@@ -76,6 +76,9 @@ function updateStats() {
     const count = locations.length;
     const el = document.getElementById('memoryCount');
     if (el) el.textContent = count === 1 ? '1 memory' : `${count} memories`;
+
+    const journeyBtn = document.getElementById('journeyBtn');
+    if (journeyBtn) journeyBtn.style.display = count >= 5 ? 'inline-block' : 'none';
 }
 
 async function addLocation(formData) {

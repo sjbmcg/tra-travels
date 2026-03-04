@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Journey</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body class="journey-page">
+
+    <nav>
+        <ul>
+            <li><a href="/">← Back to Map</a></li>
+        </ul>
+        <div class="user-info">
+            <span id="username"></span>
+            <a href="/auth/logout" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Stats section -->
+    <div class="journey-container">
+        <div class="journey-header">
+            <h1>Your Journey</h1>
+            <p id="journeySubtitle" class="journey-subtitle"></p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="play-section">
+            <button id="playBtn" class="play-btn">
+                <span class="play-icon">▶</span>
+                Play Memories
+            </button>
+            <p class="play-hint">Sit back and relive your travels</p>
+        </div>
+
+        <div class="memories-grid" id="memoriesGrid"></div>
+    </div>
+
+    <!-- Fullscreen slideshow -->
+    <div id="slideshow" class="slideshow hidden">
+        <div class="slide-backdrop" id="slideBackdrop"></div>
+        <div class="slide-content" id="slideContent">
+            <div class="slide-photo-wrap" id="slidePhotoWrap"></div>
+            <div class="slide-text" id="slideText"></div>
+        </div>
+        <div class="slide-progress" id="slideProgress"></div>
+        <button class="slide-close" id="slideClose">✕</button>
+        <button class="slide-prev" id="slidePrev">‹</button>
+        <button class="slide-next" id="slideNext">›</button>
+        <div class="slide-counter" id="slideCounter"></div>
+    </div>
+
+    <script>
+    let memories = [];
+    let currentSlide = 0;
+    let slideshowTimer = null;
+
+    async function init() {
+        const user = await fetch('/auth/me').then(r => r.json());
+        if (!user) { window.location.href = '/login.html'; return; }
+        document.getElementById('username').textContent = user.name;
+
+        memories = await fetch('/api/memories').then(r => r.json());
+        memories.sort((a, b) => new Date(a.date_visited) - new Date(b.date_visited));
+
+        renderStats();
+        renderMemoriesGrid();
+    }
+
+    function renderStats() {
+        const total = memories.length;
+        if (total === 0) {
+            document.getElementById('journeySubtitle').textContent = 'No memories yet — start exploring!';
+            return;
+        }
+
+        const first = memories[0];
+        const latest = memories[memories.length - 1];
+
+        const monthCounts = {};
+        memories.forEach(m => {
+            const month = new Date(m.date_visited).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+            monthCounts[month] = (monthCounts[month] || 0) + 1;
+        });
+        const busiestMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
+
+        const withPhotos = memories.filter(m => m.photo_url).length;
+
+        document.getElementById('journeySubtitle').textContent =
+            `${total} ${total === 1 ? 'memory' : 'memories'} and counting ✦`;
+
+        const stats = [
+            { label: 'Places Visited',   value: total },
+            { label: 'First Memory',     value: new Date(first.date_visited).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) },
+            { label: 'Most Recent',      value: new Date(latest.date_visited).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) },
+            { label: 'Busiest Month',    value: busiestMonth ? busiestMonth[0] : '—' },
+            { label: 'Photos Captured',  value: withPhotos },
+        ];
+
+        const grid = document.getElementById('statsGrid');
+        grid.innerHTML = stats.map(s => `
+            <div class="stat-card">
+                <div class="stat-value">${s.value}</div>
+                <div class="stat-label">${s.label}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderMemoriesGrid() {
+        const grid = document.getElementById('memoriesGrid');
+        if (!memories.length) return;
+
+        grid.innerHTML = [...memories].reverse().map((m, i) => `
+            <div class="memory-thumb" onclick="startSlideshow(${memories.indexOf(m)})">
+                ${m.photo_url
+                    ? `<img src="${m.photo_url}" alt="${m.location_name}">`
+                    : `<div class="thumb-placeholder">✦</div>`
+                }
+                <div class="thumb-overlay">
+                    <div class="thumb-name">${m.location_name}</div>
+                    <div class="thumb-date">${new Date(m.date_visited).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function startSlideshow(startIndex = 0) {
+        if (!memories.length) return;
+        currentSlide = startIndex;
+        document.getElementById('slideshow').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        showSlide(currentSlide);
+        startAutoAdvance();
+    }
+
+    function stopSlideshow() {
+        document.getElementById('slideshow').classList.add('hidden');
+        document.body.style.overflow = '';
+        clearTimeout(slideshowTimer);
+    }
+
+    function showSlide(index) {
+        const m = memories[index];
+        const total = memories.length;
+
+        // Backdrop colour
+        const backdrop = document.getElementById('slideBackdrop');
+        backdrop.style.background = m.photo_url ? 'rgba(0,0,0,0.85)' : 'linear-gradient(135deg, #2c2c54, #4a4a8a)';
+
+        // Photo
+        const photoWrap = document.getElementById('slidePhotoWrap');
+        photoWrap.innerHTML = m.photo_url
+            ? `<img src="${m.photo_url}" class="slide-photo" alt="${m.location_name}">`
+            : `<div class="slide-no-photo">✦</div>`;
+
+        // Text
+        const text = document.getElementById('slideText');
+        text.innerHTML = `
+            <div class="slide-location">${m.location_name}</div>
+            <div class="slide-date">${new Date(m.date_visited).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+            <div class="slide-story">${m.what_happened || ''}</div>
+            <div class="slide-special">${m.why_was_it_special ? `"${m.why_was_it_special}"` : ''}</div>
+        `;
+
+        // Counter
+        document.getElementById('slideCounter').textContent = `${index + 1} / ${total}`;
+
+        // Progress dots
+        const progress = document.getElementById('slideProgress');
+        progress.innerHTML = memories.map((_, i) =>
+            `<span class="dot ${i === index ? 'active' : ''}"></span>`
+        ).join('');
+
+        // Animate in
+        const content = document.getElementById('slideContent');
+        content.classList.remove('slide-in');
+        void content.offsetWidth;
+        content.classList.add('slide-in');
+    }
+
+    function startAutoAdvance() {
+        clearTimeout(slideshowTimer);
+        slideshowTimer = setTimeout(() => {
+            if (currentSlide < memories.length - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+                startAutoAdvance();
+            }
+        }, 6000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('playBtn').addEventListener('click', () => startSlideshow(0));
+        document.getElementById('slideClose').addEventListener('click', stopSlideshow);
+        document.getElementById('slideNext').addEventListener('click', () => {
+            clearTimeout(slideshowTimer);
+            if (currentSlide < memories.length - 1) { currentSlide++; showSlide(currentSlide); startAutoAdvance(); }
+        });
+        document.getElementById('slidePrev').addEventListener('click', () => {
+            clearTimeout(slideshowTimer);
+            if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); startAutoAdvance(); }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('slideshow').classList.contains('hidden')) return;
+            if (e.key === 'ArrowRight' && currentSlide < memories.length - 1) { clearTimeout(slideshowTimer); currentSlide++; showSlide(currentSlide); startAutoAdvance(); }
+            if (e.key === 'ArrowLeft'  && currentSlide > 0) { clearTimeout(slideshowTimer); currentSlide--; showSlide(currentSlide); startAutoAdvance(); }
+            if (e.key === 'Escape') stopSlideshow();
+        });
+    });
+
+    init();
+    </script>
+</body>
+</html>
