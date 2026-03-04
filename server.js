@@ -70,3 +70,28 @@ app.get('/api/memories', requireAuth, async (req, res) => {
 });
 
 app.listen(3000, () => console.log('Server running on http://localhost:3000'));
+
+// Delete a memory
+app.delete('/api/memories/:id', requireAuth, async (req, res) => {
+    await pool.query('DELETE FROM memories WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    res.json({ success: true });
+});
+
+// Edit a memory
+app.put('/api/memories/:id', requireAuth, upload.single('photo'), async (req, res) => {
+    const { location_name, date_visited, what_happened, why_did_you_go, why_was_it_special } = req.body;
+    const photo_url = req.file ? req.file.path : undefined;
+
+    const { rows } = await pool.query(
+        `UPDATE memories SET
+            location_name = $1, date_visited = $2, what_happened = $3,
+            why_did_you_go = $4, why_was_it_special = $5
+            ${photo_url ? ', photo_url = $7' : ''}
+         WHERE id = $6 AND user_id = ${photo_url ? '$8' : '$7'}
+         RETURNING *`,
+        photo_url
+            ? [location_name, date_visited, what_happened, why_did_you_go, why_was_it_special, req.params.id, photo_url, req.user.id]
+            : [location_name, date_visited, what_happened, why_did_you_go, why_was_it_special, req.params.id, req.user.id]
+    );
+    res.json(rows[0]);
+});

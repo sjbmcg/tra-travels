@@ -24,10 +24,11 @@
         <div id="blogContainer"></div>
     </div>
 
+    <!-- Single modal for both add and edit -->
     <div id="locationModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>Add Travel Memory</h2>
+            <h2 id="modalTitle">Add Travel Memory</h2>
             <form id="locationForm">
                 <label>Location Name</label>
                 <input type="text" id="name" required>
@@ -48,7 +49,7 @@
                 <input type="file" id="photo" accept="image/*">
                 <img id="photoPreview" style="display:none;width:100%;border-radius:10px;margin-top:8px;max-height:200px;object-fit:cover;">
 
-                <button type="submit">Save Memory</button>
+                <button type="submit" id="submitBtn">Save Memory</button>
             </form>
         </div>
     </div>

@@ -185,12 +185,10 @@ ul li a:hover { color: var(--sakura); }
 
 .modal-content {
     background: white;
-    margin: 4% auto;
+    margin: 6% auto;
     padding: 32px;
     width: 90%;
     max-width: 480px;
-    max-height: 85vh;
-    overflow-y: auto;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(44,44,84,0.2);
     border-top: 4px solid var(--sakura);
@@ -352,3 +350,32 @@ input[type="file"] {
 }
 
 .google-btn img { width: 20px; height: 20px; }
+
+/* Edit / Delete buttons on blog posts */
+.post-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.action-btn {
+    padding: 5px 14px;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.action-btn:hover { opacity: 0.8; }
+
+.edit-btn {
+    background: var(--sky);
+    color: var(--ink);
+}
+
+.delete-btn {
+    background: #fde8e8;
+    color: #c0392b;
+}
