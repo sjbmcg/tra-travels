@@ -92,21 +92,17 @@ app.get('/api/trip/:id', async (req, res) => {
     const { rows } = await pool.query(`
         SELECT * FROM memories
         WHERE user_id = $1
-        AND date_visited BETWEEN ($2::date - interval '30 days') AND ($2::date + interval '30 days')
+        AND date_visited BETWEEN $2::date AND ($2::date + interval '30 days')
         ORDER BY date_visited ASC
         LIMIT 5
     `, [m.user_id, m.date_visited]);
 
     res.json(rows);
 });
-
-// Get a specific memory
-app.get('/api/memories/:id', async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM memories WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Memory not found' });
     res.json(rows[0]);
 });
-
 app.delete('/api/memories/:id', requireAuth, async (req, res) => {
     await pool.query('DELETE FROM memories WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     res.json({ success: true });
