@@ -23,7 +23,20 @@ function initMap() {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    map.on('click', e => openLocationForm(e.latlng.lat, e.latlng.lng));
+    map.on('click', async function (e) {
+        const { lat, lng } = e.latlng;
+
+        // Reverse geocode via Nominatim
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const data = await res.json();
+
+        // Use first two parts of display_name e.g. "Cebu City, Cebu"
+        const locationName = data.display_name
+            ? data.display_name.split(',').slice(0, 2).join(',').trim()
+            : '';
+
+        openLocationForm(lat, lng, locationName);
+    });
 }
 
 function createMarker(location) {

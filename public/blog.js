@@ -1,57 +1,13 @@
 let selectedLat = null;
 let selectedLng = null;
 
-// Open form
-function openLocationForm(lat, lng) {
+// Open form — called from map.js
+function openLocationForm(lat, lng, locationName = '') {
     selectedLat = lat;
     selectedLng = lng;
+    document.getElementById("name").value = locationName;
     document.getElementById("locationModal").style.display = "block";
 }
-
-// Close modal
-document.querySelector(".close").onclick = function () {
-    document.getElementById("locationModal").style.display = "none";
-};
-
-window.onclick = function (event) {
-    const modal = document.getElementById("locationModal");
-    if (event.target === modal) modal.style.display = "none";
-};
-
-// Handle form submit — use FormData to support file upload
-document.getElementById("locationForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("location_name",      document.getElementById("name").value);
-    formData.append("date_visited",       document.getElementById("date").value);
-    formData.append("what_happened",      document.getElementById("description").value);
-    formData.append("why_did_you_go",     document.getElementById("whyWent").value);
-    formData.append("why_was_it_special", document.getElementById("whySpecial").value);
-    formData.append("lat", selectedLat);
-    formData.append("lng", selectedLng);
-
-    const photoFile = document.getElementById("photo").files[0];
-    if (photoFile) formData.append("photo", photoFile);
-
-    await addLocation(formData);
-
-    document.getElementById("locationModal").style.display = "none";
-    this.reset();
-    document.getElementById("photoPreview").style.display = "none";
-});
-
-// Photo preview
-document.getElementById("photo").addEventListener("change", function () {
-    const preview = document.getElementById("photoPreview");
-    const file = this.files[0];
-    if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
-    } else {
-        preview.style.display = "none";
-    }
-});
 
 // Create blog post
 function createBlogPost(location) {
@@ -74,3 +30,49 @@ function createBlogPost(location) {
 
     container.appendChild(post);
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelector(".close").onclick = function () {
+        document.getElementById("locationModal").style.display = "none";
+    };
+
+    window.onclick = function (event) {
+        const modal = document.getElementById("locationModal");
+        if (event.target === modal) modal.style.display = "none";
+    };
+
+    document.getElementById("locationForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append("location_name",      document.getElementById("name").value);
+        formData.append("date_visited",       document.getElementById("date").value);
+        formData.append("what_happened",      document.getElementById("description").value);
+        formData.append("why_did_you_go",     document.getElementById("whyWent").value);
+        formData.append("why_was_it_special", document.getElementById("whySpecial").value);
+        formData.append("lat", selectedLat);
+        formData.append("lng", selectedLng);
+
+        const photoFile = document.getElementById("photo").files[0];
+        if (photoFile) formData.append("photo", photoFile);
+
+        await addLocation(formData);
+
+        document.getElementById("locationModal").style.display = "none";
+        this.reset();
+        document.getElementById("photoPreview").style.display = "none";
+    });
+
+    document.getElementById("photo").addEventListener("change", function () {
+        const preview = document.getElementById("photoPreview");
+        const file = this.files[0];
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = "block";
+        } else {
+            preview.style.display = "none";
+        }
+    });
+
+});
