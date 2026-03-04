@@ -76,12 +76,37 @@ app.get('/memory/:id', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'memory.html'));
 });
 
-// Public memory API — no auth required
-app.get('/api/memory/:id', async (req, res) => {
+// Public trip page
+app.get('/trip/:id', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'trip.html'));
+});
+
+// Public trip API — finds up to 5 memories closest in date to the anchor memory
+app.get('/api/trip/:id', async (req, res) => {
+    const anchor = await pool.query('SELECT * FROM memories WHERE id = $1', [req.params.id]);
+    if (!anchor.rows.length) return res.status(404).json({ error: 'Not found' });
+
+    const m = anchor.rows[0];
+
+    // Get memories from same user within 30 days either side, ordered by date
+    const { rows } = await pool.query(`
+        SELECT * FROM memories
+        WHERE user_id = $1
+        AND date_visited BETWEEN ($2::date - interval '30 days') AND ($2::date + interval '30 days')
+        ORDER BY date_visited ASC
+        LIMIT 5
+    `, [m.user_id, m.date_visited]);
+
+    res.json(rows);
+});
+
+// Get a specific memory
+app.get('/api/memories/:id', async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM memories WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Memory not found' });
     res.json(rows[0]);
 });
+
 app.delete('/api/memories/:id', requireAuth, async (req, res) => {
     await pool.query('DELETE FROM memories WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     res.json({ success: true });

@@ -51,17 +51,33 @@ function openEditModal(id) {
     document.getElementById("locationModal").style.display = "block";
 }
 
-// Share a memory
-function shareMemory(id) {
-    const url = `${window.location.origin}/memory/${id}`;
+// Share a trip
+async function shareTrip(id, btn) {
+    const res = await fetch(`/api/trip/${id}`);
+    const memories = await res.json();
+
+    if (memories.length < 3) {
+        btn.textContent = 'Need 3+ memories nearby';
+        btn.style.background = '#fde8e8';
+        btn.style.color = '#c0392b';
+        setTimeout(() => {
+            btn.textContent = 'Share Trip';
+            btn.style.background = '';
+            btn.style.color = '';
+        }, 2500);
+        return;
+    }
+
+    const url = `${window.location.origin}/trip/${id}`;
     navigator.clipboard.writeText(url).then(() => {
-        const btn = document.querySelector(`.blog-post[data-id="${id}"] .share-btn`);
         const original = btn.textContent;
         btn.textContent = 'Copied!';
         btn.style.background = '#d4edda';
+        btn.style.color = '#2e7d32';
         setTimeout(() => {
             btn.textContent = original;
             btn.style.background = '';
+            btn.style.color = '';
         }, 2000);
     });
 }
@@ -111,7 +127,7 @@ function createBlogPost(location) {
         <div class="post-actions">
             <button class="action-btn edit-btn" onclick="openEditModal(${location.id})">Edit</button>
             <button class="action-btn delete-btn" onclick="deleteMemory(${location.id})">Delete</button>
-            <button class="action-btn share-btn" onclick="shareMemory(${location.id})">Share</button>
+            <button class="action-btn share-btn" onclick="shareTrip(${location.id}, this)">Share Trip</button>
         </div>
     `;
 
