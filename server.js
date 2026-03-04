@@ -99,10 +99,13 @@ app.get('/api/trip/:id', async (req, res) => {
 
     res.json(rows);
 });
+
+app.get('/api/memories/:id', async (req, res) => {
     const { rows } = await pool.query('SELECT * FROM memories WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Memory not found' });
     res.json(rows[0]);
 });
+
 app.delete('/api/memories/:id', requireAuth, async (req, res) => {
     await pool.query('DELETE FROM memories WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     res.json({ success: true });
