@@ -97,8 +97,14 @@ function updateStats() {
     const el = document.getElementById('memoryCount');
     if (el) el.textContent = count === 1 ? '1 memory' : `${count} memories`;
 
+    const drawerCount = document.getElementById('drawerCount');
+    if (drawerCount) drawerCount.textContent = count === 1 ? '1 memory' : `${count} memories`;
+
     const journeyBtn = document.getElementById('journeyBtn');
     if (journeyBtn) journeyBtn.style.display = count >= 5 ? 'inline-block' : 'none';
+
+    const drawerJourneyLink = document.getElementById('drawerJourneyLink');
+    if (drawerJourneyLink) drawerJourneyLink.style.display = count >= 5 ? 'flex' : 'none';
 }
 
 function renderYearFilter() {
@@ -120,6 +126,10 @@ function filterByYear(year) {
     });
 }
 
+async function openLocationForm(lat, lng, locationName) {
+    // Form submission handler would go here
+}
+
 async function saveMemory(formData) {
     const response = await fetch('/api/memories', { method: 'POST', body: formData });
     if (response.status === 401) { window.location.href = '/login.html'; return; }
@@ -139,6 +149,10 @@ window.onload = async function () {
     if (!user) { window.location.href = '/login.html'; return; }
 
     document.getElementById('username').textContent = user.name;
+    const drawerAvatar = document.getElementById('drawerAvatar');
+    if (drawerAvatar) drawerAvatar.textContent = user.name ? user.name[0].toUpperCase() : '?';
+    const drawerName = document.getElementById('drawerName');
+    if (drawerName) drawerName.textContent = user.name;
     initMap();
 
     const memories = await fetch('/api/memories').then(r => r.json());

@@ -9,20 +9,41 @@
 </head>
 <body>
     <nav>
-        <button class="hamburger" id="hamburger" onclick="toggleNav()">☰</button>
-        <div class="nav-links" id="navLinks">
-            <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="/about.html">About</a></li>
-            </ul>
-            <div class="user-info">
-                <span id="memoryCount" class="memory-count"></span>
-                <a href="/journey.html" id="journeyBtn" style="display:none" class="journey-nav-btn">✦ Your Journey</a>
-                <span id="username"></span>
-                <a href="/auth/logout" class="logout-btn">Logout</a>
+        <!-- Desktop nav -->
+        <div class="nav-left">
+            <a href="/" class="nav-brand">✦ Travel Blog</a>
+            <a href="/about.html" class="nav-link">About</a>
+        </div>
+        <div class="nav-right">
+            <span id="memoryCount" class="memory-count"></span>
+            <a href="/journey.html" id="journeyBtn" style="display:none" class="journey-nav-btn">✦ Your Journey</a>
+            <span id="username" class="nav-username"></span>
+            <a href="/auth/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- Mobile menu drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="drawer-user">
+            <div class="drawer-avatar" id="drawerAvatar"></div>
+            <div>
+                <div class="drawer-name" id="drawerName"></div>
+                <div class="drawer-count" id="drawerCount"></div>
             </div>
         </div>
-    </nav>
+        <nav class="drawer-nav">
+            <a href="/" class="drawer-link">🗺 Map</a>
+            <a href="/journey.html" class="drawer-link" id="drawerJourneyLink" style="display:none">✦ Your Journey</a>
+            <a href="/about.html" class="drawer-link">ℹ About</a>
+        </nav>
+        <a href="/auth/logout" class="drawer-logout">Logout</a>
+    </div>
+    <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeNav()"></div>
 
     <div class="main-container">
         <div id="map"></div>
@@ -88,15 +109,15 @@
 
     <script>
     function toggleNav() {
-        const links = document.getElementById('navLinks');
-        links.classList.toggle('open');
+        document.getElementById('mobileDrawer').classList.toggle('open');
+        document.getElementById('drawerBackdrop').classList.toggle('open');
+        document.getElementById('hamburger').classList.toggle('active');
     }
-    // Close nav when clicking a link
-    document.querySelectorAll('.nav-links a').forEach(a => {
-        a.addEventListener('click', () => {
-            document.getElementById('navLinks').classList.remove('open');
-        });
-    });
+    function closeNav() {
+        document.getElementById('mobileDrawer').classList.remove('open');
+        document.getElementById('drawerBackdrop').classList.remove('open');
+        document.getElementById('hamburger').classList.remove('active');
+    }
     </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
