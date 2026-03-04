@@ -5,6 +5,7 @@ let decorator = null;
 
 function normalizeLocation(data) {
     return {
+        id:                 data.id,
         location_name:      data.location_name,
         date_visited:       data.date_visited,
         what_happened:      data.what_happened,
