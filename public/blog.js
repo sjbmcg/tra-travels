@@ -51,6 +51,24 @@ function openEditModal(id) {
     document.getElementById("locationModal").style.display = "block";
 }
 
+// Copy to clipboard with mobile fallback
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    // Mobile fallback
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    return Promise.resolve();
+}
+
 // Share a trip
 async function shareTrip(id, btn) {
     const res = await fetch(`/api/trip/${id}`);
@@ -69,7 +87,18 @@ async function shareTrip(id, btn) {
     }
 
     const url = `${window.location.origin}/trip/${id}`;
-    navigator.clipboard.writeText(url).then(() => {
+
+    // Use native share sheet on mobile if available
+    if (navigator.share) {
+        navigator.share({
+            title: 'Check out my trip',
+            text: 'Follow my journey on Travel Blog',
+            url
+        });
+        return;
+    }
+
+    copyToClipboard(url).then(() => {
         const original = btn.textContent;
         btn.textContent = 'Copied!';
         btn.style.background = '#d4edda';
