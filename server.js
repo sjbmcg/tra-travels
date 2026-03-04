@@ -65,7 +65,7 @@ app.post('/api/memories', requireAuth, upload.single('photo'), async (req, res) 
 });
 
 app.get('/api/memories', requireAuth, async (req, res) => {
-    const { rows } = await pool.query('SELECT * FROM memories WHERE user_id = $1 ORDER BY created_at ASC', [req.user.id]);
+    const { rows } = await pool.query('SELECT * FROM memories WHERE user_id = $1 ORDER BY date_visited DESC', [req.user.id]);
     res.json(rows);
 });
 
