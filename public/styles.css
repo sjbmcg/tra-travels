@@ -29,9 +29,12 @@ nav, ul {
     align-items: center;
     background: var(--ink);
     padding: 0 20px;
+    padding-top: env(safe-area-inset-top);
     margin: 0;
     overflow: hidden;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 999;
 }
 
 nav::after {
