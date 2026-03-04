@@ -29,7 +29,7 @@ app.use(passport.session());
 passport.use(new Google({
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  '/auth/google/callback'
+    callbackURL:  'http://travel-blog-production-0a44.up.railway.app/auth/google/callback'
 }, async (_, __, profile, done) => {
     let { rows } = await pool.query('SELECT * FROM users WHERE google_id = $1', [profile.id]);
     if (!rows.length) {
