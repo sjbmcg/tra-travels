@@ -9,15 +9,18 @@
 </head>
 <body>
     <nav>
-        <ul>
-            <li><a href="#home">Home</a></li>
-            <li><a href="/about.html">About</a></li>
-        </ul>
-        <div class="user-info">
-            <span id="memoryCount" class="memory-count"></span>
-            <a href="/journey.html" id="journeyBtn" style="display:none" class="journey-nav-btn">✦ Your Journey</a>
-            <span id="username"></span>
-            <a href="/auth/logout" class="logout-btn">Logout</a>
+        <button class="hamburger" id="hamburger" onclick="toggleNav()">☰</button>
+        <div class="nav-links" id="navLinks">
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="/about.html">About</a></li>
+            </ul>
+            <div class="user-info">
+                <span id="memoryCount" class="memory-count"></span>
+                <a href="/journey.html" id="journeyBtn" style="display:none" class="journey-nav-btn">✦ Your Journey</a>
+                <span id="username"></span>
+                <a href="/auth/logout" class="logout-btn">Logout</a>
+            </div>
         </div>
     </nav>
 
@@ -80,6 +83,18 @@
         </div>
     </div>
 
+    <script>
+    function toggleNav() {
+        const links = document.getElementById('navLinks');
+        links.classList.toggle('open');
+    }
+    // Close nav when clicking a link
+    document.querySelectorAll('.nav-links a').forEach(a => {
+        a.addEventListener('click', () => {
+            document.getElementById('navLinks').classList.remove('open');
+        });
+    });
+    </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
     <script src="map.js"></script>
