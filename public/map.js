@@ -2,7 +2,7 @@ let map;
 let locations = [];
 let polyline  = null;
 let decorator = null;
-let markers   = {}; // track markers by memory id
+let markers   = {};
 
 function normalizeLocation(data) {
     return {
@@ -63,7 +63,7 @@ function updateMarkerPopup(location) {
     marker.setPopupContent(popupContent);
 }
 
-function deleteMemory(id) {
+function removeMarker(id) {
     if (markers[id]) {
         map.removeLayer(markers[id]);
         delete markers[id];
@@ -108,7 +108,7 @@ function updateStats() {
 }
 
 function renderYearFilter() {
-    const years = [...new Set(locations.map(l => new Date(l.date_visited).getFullYear()))].sort((a,b) => b - a);
+    const years = [...new Set(locations.map(l => new Date(l.date_visited).getFullYear()))].sort((a, b) => b - a);
     const filter = document.getElementById('yearFilter');
     if (years.length < 2) { filter.style.display = 'none'; return; }
 
@@ -126,11 +126,7 @@ function filterByYear(year) {
     });
 }
 
-async function openLocationForm(lat, lng, locationName) {
-    // Form submission handler would go here
-}
-
-async function saveMemory(formData) {
+async function addLocation(formData) {
     const response = await fetch('/api/memories', { method: 'POST', body: formData });
     if (response.status === 401) { window.location.href = '/login.html'; return; }
     const saved = await response.json();
@@ -153,6 +149,7 @@ window.onload = async function () {
     if (drawerAvatar) drawerAvatar.textContent = user.name ? user.name[0].toUpperCase() : '?';
     const drawerName = document.getElementById('drawerName');
     if (drawerName) drawerName.textContent = user.name;
+
     initMap();
 
     const memories = await fetch('/api/memories').then(r => r.json());
