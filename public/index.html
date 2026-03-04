@@ -31,7 +31,26 @@
             <h2 id="modalTitle">Add Travel Memory</h2>
             <form id="locationForm">
                 <label>Location Name</label>
-                <input type="text" id="name" required>
+                <div style="position:relative">
+                    <input type="text" id="name" required autocomplete="off">
+                    <ul id="nameSuggestions" style="
+                        display:none;
+                        position:absolute;
+                        top:100%;
+                        left:0;
+                        right:0;
+                        background:white;
+                        border:1px solid #f2a7c3;
+                        border-radius:0 0 10px 10px;
+                        list-style:none;
+                        margin:0;
+                        padding:0;
+                        z-index:9999;
+                        max-height:200px;
+                        overflow-y:auto;
+                        box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                    "></ul>
+                </div>
 
                 <label>Date Visited</label>
                 <input type="date" id="date" required>

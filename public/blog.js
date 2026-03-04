@@ -129,6 +129,48 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("photoPreview").style.display = "none";
     });
 
+    // Location name autocomplete
+    let searchTimeout;
+    const nameInput = document.getElementById("name");
+    const suggestions = document.getElementById("nameSuggestions");
+
+    nameInput.addEventListener("input", function () {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        if (query.length < 3) { suggestions.style.display = "none"; return; }
+
+        searchTimeout = setTimeout(async () => {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`);
+            const results = await res.json();
+
+            suggestions.innerHTML = '';
+            if (!results.length) { suggestions.style.display = "none"; return; }
+
+            results.forEach(place => {
+                const li = document.createElement("li");
+                li.textContent = place.display_name.split(',').slice(0, 3).join(',');
+                li.style.cssText = "padding:10px 14px;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #fde8f0;";
+                li.addEventListener("mouseenter", () => li.style.background = "#fdf0f6");
+                li.addEventListener("mouseleave", () => li.style.background = "white");
+                li.addEventListener("click", () => {
+                    nameInput.value = place.display_name.split(',').slice(0, 2).join(',').trim();
+                    // Also update map position if adding new memory
+                    if (!editingId) {
+                        selectedLat = parseFloat(place.lat);
+                        selectedLng = parseFloat(place.lon);
+                    }
+                    suggestions.style.display = "none";
+                });
+                suggestions.appendChild(li);
+            });
+            suggestions.style.display = "block";
+        }, 300);
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!nameInput.contains(e.target)) suggestions.style.display = "none";
+    });
+
     document.getElementById("photo").addEventListener("change", function () {
         const preview = document.getElementById("photoPreview");
         const file = this.files[0];
