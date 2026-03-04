@@ -56,6 +56,7 @@ async function deleteMemory(id) {
     if (!confirm('Delete this memory?')) return;
     await fetch(`/api/memories/${id}`, { method: 'DELETE' });
     document.querySelector(`.blog-post[data-id="${id}"]`).remove();
+    removeMarker(id);
     updateStats();
 
     if (document.querySelectorAll('.blog-post').length === 0) {

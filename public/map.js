@@ -2,6 +2,7 @@ let map;
 let locations = [];
 let polyline  = null;
 let decorator = null;
+let markers   = {}; // track markers by memory id
 
 function normalizeLocation(data) {
     return {
@@ -49,7 +50,17 @@ function createMarker(location) {
     const popupContent = location.photo_url
         ? `<b>${location.location_name}</b><br><img src="${location.photo_url}" style="width:120px;border-radius:6px;margin-top:6px;">`
         : `<b>${location.location_name}</b><br>${location.what_happened}`;
-    L.marker([location.lat, location.lng]).addTo(map).bindPopup(popupContent);
+    const marker = L.marker([location.lat, location.lng]).addTo(map).bindPopup(popupContent);
+    markers[location.id] = marker;
+}
+
+function removeMarker(id) {
+    if (markers[id]) {
+        map.removeLayer(markers[id]);
+        delete markers[id];
+    }
+    locations = locations.filter(l => l.id !== id);
+    updateRoute();
 }
 
 function updateRoute() {
