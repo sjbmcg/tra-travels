@@ -2,10 +2,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Your Journey</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body class="journey-page">
 
@@ -19,8 +20,8 @@
         </div>
     </nav>
 
-    <!-- Stats section -->
-    <div class="journey-container">
+    <div class="journey-container" style="max-width:900px">
+
         <div class="journey-header">
             <h1>Your Journey</h1>
             <p id="journeySubtitle" class="journey-subtitle"></p>
@@ -31,32 +32,49 @@
         <div class="play-section">
             <button id="playBtn" class="play-btn">
                 <span class="play-icon">▶</span>
-                Play Memories
+                Play Journey
             </button>
-            <p class="play-hint">Sit back and relive your travels</p>
+            <p class="play-hint">Fly through every place you've been</p>
         </div>
 
         <div class="memories-grid" id="memoriesGrid"></div>
     </div>
 
-    <!-- Fullscreen slideshow -->
-    <div id="slideshow" class="slideshow hidden">
-        <div class="slide-backdrop" id="slideBackdrop"></div>
-        <div class="slide-content" id="slideContent">
-            <div class="slide-photo-wrap" id="slidePhotoWrap"></div>
-            <div class="slide-text" id="slideText"></div>
-        </div>
-        <div class="slide-progress" id="slideProgress"></div>
-        <button class="slide-close" id="slideClose">✕</button>
-        <button class="slide-prev" id="slidePrev">‹</button>
-        <button class="slide-next" id="slideNext">›</button>
-        <div class="slide-counter" id="slideCounter"></div>
+    <!-- Fullscreen map journey -->
+    <div id="journeyMap" class="journey-map-overlay hidden">
+        <div id="jmap" style="width:100%;height:100%"></div>
+
+        <div id="jmapOverlay" style="
+            position:absolute; inset:0;
+            background:#0a0a0f;
+            transition:opacity 1.2s ease;
+            pointer-events:none; z-index:500;
+        "></div>
+
+        <button class="slide-close" id="journeyClose">✕</button>
+
+        <div id="jprogress" style="
+            position:absolute; bottom:28px; left:50%;
+            transform:translateX(-50%);
+            display:flex; gap:8px; z-index:600;
+        "></div>
+
+        <div id="jstopLabel" style="
+            position:absolute; top:20px; right:20px;
+            background:rgba(0,0,0,0.4); color:rgba(255,255,255,0.7);
+            padding:6px 14px; border-radius:20px;
+            font-size:0.78rem; z-index:600;
+            backdrop-filter:blur(8px);
+        "></div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
     <script>
     let memories = [];
-    let currentSlide = 0;
-    let slideshowTimer = null;
+    let jmap, currentStop = 0;
+    let routeCoords = [], polyline, decorator;
+    let markers = {};
 
     async function init() {
         const user = await fetch('/auth/me').then(r => r.json());
@@ -72,36 +90,27 @@
 
     function renderStats() {
         const total = memories.length;
-        if (total === 0) {
-            document.getElementById('journeySubtitle').textContent = 'No memories yet — start exploring!';
-            return;
-        }
+        if (!total) { document.getElementById('journeySubtitle').textContent = 'No memories yet — start exploring!'; return; }
 
-        const first = memories[0];
+        const first  = memories[0];
         const latest = memories[memories.length - 1];
-
         const monthCounts = {};
         memories.forEach(m => {
-            const month = new Date(m.date_visited).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+            const month = new Date(m.date_visited).toLocaleString('en-GB', { month:'long', year:'numeric' });
             monthCounts[month] = (monthCounts[month] || 0) + 1;
         });
-        const busiestMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
-
+        const busiest    = Object.entries(monthCounts).sort((a,b) => b[1]-a[1])[0];
         const withPhotos = memories.filter(m => m.photo_url).length;
 
-        document.getElementById('journeySubtitle').textContent =
-            `${total} ${total === 1 ? 'memory' : 'memories'} and counting ✦`;
+        document.getElementById('journeySubtitle').textContent = `${total} ${total===1?'memory':'memories'} and counting ✦`;
 
-        const stats = [
-            { label: 'Places Visited',   value: total },
-            { label: 'First Memory',     value: new Date(first.date_visited).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) },
-            { label: 'Most Recent',      value: new Date(latest.date_visited).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) },
-            { label: 'Busiest Month',    value: busiestMonth ? busiestMonth[0] : '—' },
-            { label: 'Photos Captured',  value: withPhotos },
-        ];
-
-        const grid = document.getElementById('statsGrid');
-        grid.innerHTML = stats.map(s => `
+        document.getElementById('statsGrid').innerHTML = [
+            { label:'Places Visited',  value: total },
+            { label:'First Memory',    value: new Date(first.date_visited).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) },
+            { label:'Most Recent',     value: new Date(latest.date_visited).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) },
+            { label:'Busiest Month',   value: busiest ? busiest[0] : '—' },
+            { label:'Photos Captured', value: withPhotos },
+        ].map(s => `
             <div class="stat-card">
                 <div class="stat-value">${s.value}</div>
                 <div class="stat-label">${s.label}</div>
@@ -110,109 +119,136 @@
     }
 
     function renderMemoriesGrid() {
-        const grid = document.getElementById('memoriesGrid');
         if (!memories.length) return;
-
-        grid.innerHTML = [...memories].reverse().map((m, i) => `
-            <div class="memory-thumb" onclick="startSlideshow(${memories.indexOf(m)})">
-                ${m.photo_url
-                    ? `<img src="${m.photo_url}" alt="${m.location_name}">`
-                    : `<div class="thumb-placeholder">✦</div>`
-                }
+        document.getElementById('memoriesGrid').innerHTML = [...memories].reverse().map((m,i) => `
+            <div class="memory-thumb" onclick="startJourney(${memories.indexOf(m)})">
+                ${m.photo_url ? `<img src="${m.photo_url}" alt="${m.location_name}">` : '<div class="thumb-placeholder">✦</div>'}
                 <div class="thumb-overlay">
                     <div class="thumb-name">${m.location_name}</div>
-                    <div class="thumb-date">${new Date(m.date_visited).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</div>
+                    <div class="thumb-date">${new Date(m.date_visited).toLocaleDateString('en-GB',{month:'short',year:'numeric'})}</div>
                 </div>
             </div>
         `).join('');
     }
 
-    function startSlideshow(startIndex = 0) {
+    function startJourney(startIndex = 0) {
         if (!memories.length) return;
-        currentSlide = startIndex;
-        document.getElementById('slideshow').classList.remove('hidden');
+        currentStop = startIndex;
+        routeCoords = [];
+        markers = {};
+        polyline = null;
+        decorator = null;
+
+        document.getElementById('journeyMap').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        showSlide(currentSlide);
-        startAutoAdvance();
+
+        // Build progress dots
+        const prog = document.getElementById('jprogress');
+        prog.innerHTML = memories.map((_,i) => `<span class="dot" id="jdot-${i}"></span>`).join('');
+
+        if (!jmap) {
+            jmap = L.map('jmap', { zoomControl:false, attributionControl:false });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(jmap);
+        }
+
+        // Overview fit
+        const bounds = L.latLngBounds(memories.map(m => [m.lat, m.lng]));
+        jmap.fitBounds(bounds, { padding:[80,80] });
+
+        // Fade in
+        setTimeout(() => { document.getElementById('jmapOverlay').style.opacity = 0; }, 300);
+        setTimeout(() => flyToStop(startIndex), 2500);
     }
 
-    function stopSlideshow() {
-        document.getElementById('slideshow').classList.add('hidden');
-        document.body.style.overflow = '';
-        clearTimeout(slideshowTimer);
-    }
-
-    function showSlide(index) {
+    function flyToStop(index) {
+        if (index >= memories.length) return;
         const m = memories[index];
-        const total = memories.length;
+        currentStop = index;
 
-        // Backdrop colour
-        const backdrop = document.getElementById('slideBackdrop');
-        backdrop.style.background = m.photo_url ? 'rgba(0,0,0,0.85)' : 'linear-gradient(135deg, #2c2c54, #4a4a8a)';
+        memories.forEach((_,i) => {
+            const dot = document.getElementById(`jdot-${i}`);
+            if (dot) dot.className = 'dot' + (i===index?' active':i<index?' done':'');
+        });
 
-        // Photo
-        const photoWrap = document.getElementById('slidePhotoWrap');
-        photoWrap.innerHTML = m.photo_url
-            ? `<img src="${m.photo_url}" class="slide-photo" alt="${m.location_name}">`
-            : `<div class="slide-no-photo">✦</div>`;
+        document.getElementById('jstopLabel').textContent = `Stop ${index+1} of ${memories.length}`;
+        jmap.flyTo([m.lat, m.lng], 13, { duration:2.5, easeLinearity:0.25 });
 
-        // Text
-        const text = document.getElementById('slideText');
-        text.innerHTML = `
-            <div class="slide-location">${m.location_name}</div>
-            <div class="slide-date">${new Date(m.date_visited).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
-            <div class="slide-story">${m.what_happened || ''}</div>
-            <div class="slide-special">${m.why_was_it_special ? `"${m.why_was_it_special}"` : ''}</div>
-        `;
+        setTimeout(() => {
+            const pulseIcon = L.divIcon({ className:'', html:'<div class="pulse-ring"></div>', iconSize:[20,20], iconAnchor:[10,10] });
+            const marker = L.marker([m.lat, m.lng], { icon:pulseIcon }).addTo(jmap);
+            markers[m.id] = marker;
 
-        // Counter
-        document.getElementById('slideCounter').textContent = `${index + 1} / ${total}`;
+            const photoHtml = m.photo_url ? `<img src="${m.photo_url}" alt="${m.location_name}">` : '';
+            const isLast = index === memories.length - 1;
 
-        // Progress dots
-        const progress = document.getElementById('slideProgress');
-        progress.innerHTML = memories.map((_, i) =>
-            `<span class="dot ${i === index ? 'active' : ''}"></span>`
-        ).join('');
+            marker.bindPopup(`
+                <div class="mem-popup">
+                    ${photoHtml}
+                    <div class="pop-location">${m.location_name}</div>
+                    <div class="pop-date">${new Date(m.date_visited).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+                    ${m.what_happened ? `<div class="pop-story">${m.what_happened}</div>` : ''}
+                    ${m.why_was_it_special ? `<div class="pop-special">"${m.why_was_it_special}"</div>` : ''}
+                </div>
+            `, { maxWidth:300, closeButton:false, offset:[0,-10] }).openPopup();
 
-        // Animate in
-        const content = document.getElementById('slideContent');
-        content.classList.remove('slide-in');
-        void content.offsetWidth;
-        content.classList.add('slide-in');
+            routeCoords.push([m.lat, m.lng]);
+            if (routeCoords.length > 1) drawRoute();
+
+            if (!isLast) {
+                setTimeout(() => { jmap.closePopup(); setTimeout(() => flyToStop(index+1), 600); }, 5000);
+            }
+        }, 2800);
     }
 
-    function startAutoAdvance() {
-        clearTimeout(slideshowTimer);
-        slideshowTimer = setTimeout(() => {
-            if (currentSlide < memories.length - 1) {
-                currentSlide++;
-                showSlide(currentSlide);
-                startAutoAdvance();
-            }
-        }, 6000);
+    function drawRoute() {
+        if (polyline)  jmap.removeLayer(polyline);
+        if (decorator) jmap.removeLayer(decorator);
+        polyline = L.polyline(routeCoords, { color:'#f2a7c3', weight:3, opacity:0.7, dashArray:'6,8' }).addTo(jmap);
+        decorator = L.polylineDecorator(polyline, {
+            patterns:[{ offset:'5%', repeat:'15%',
+                symbol: L.Symbol.arrowHead({ pixelSize:12, polygon:false, pathOptions:{ color:'#e87fa8', weight:2.5, opacity:0.9 } })
+            }]
+        }).addTo(jmap);
+    }
+
+    function stopJourney() {
+        document.getElementById('journeyMap').classList.add('hidden');
+        document.getElementById('jmapOverlay').style.opacity = 1;
+        document.body.style.overflow = '';
+        if (jmap) { jmap.eachLayer(l => { if (!(l instanceof L.TileLayer)) jmap.removeLayer(l); }); }
+        routeCoords = []; polyline = null; decorator = null;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('playBtn').addEventListener('click', () => startSlideshow(0));
-        document.getElementById('slideClose').addEventListener('click', stopSlideshow);
-        document.getElementById('slideNext').addEventListener('click', () => {
-            clearTimeout(slideshowTimer);
-            if (currentSlide < memories.length - 1) { currentSlide++; showSlide(currentSlide); startAutoAdvance(); }
-        });
-        document.getElementById('slidePrev').addEventListener('click', () => {
-            clearTimeout(slideshowTimer);
-            if (currentSlide > 0) { currentSlide--; showSlide(currentSlide); startAutoAdvance(); }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (document.getElementById('slideshow').classList.contains('hidden')) return;
-            if (e.key === 'ArrowRight' && currentSlide < memories.length - 1) { clearTimeout(slideshowTimer); currentSlide++; showSlide(currentSlide); startAutoAdvance(); }
-            if (e.key === 'ArrowLeft'  && currentSlide > 0) { clearTimeout(slideshowTimer); currentSlide--; showSlide(currentSlide); startAutoAdvance(); }
-            if (e.key === 'Escape') stopSlideshow();
-        });
+        document.getElementById('playBtn').addEventListener('click', () => startJourney(0));
+        document.getElementById('journeyClose').addEventListener('click', stopJourney);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') stopJourney(); });
     });
 
     init();
     </script>
+
+    <style>
+    .journey-map-overlay {
+        position: fixed; inset: 0;
+        z-index: 2000;
+        background: #0a0a0f;
+    }
+    .journey-map-overlay.hidden { display: none; }
+
+    .mem-popup { font-family:'Zen Kaku Gothic New',sans-serif; min-width:240px; max-width:300px; }
+    .mem-popup img { width:100%; border-radius:8px; margin-bottom:10px; max-height:160px; object-fit:cover; display:block; }
+    .pop-location { font-family:'Sawarabi Mincho',serif; font-size:1.1rem; color:#2c2c54; margin-bottom:4px; }
+    .pop-date     { font-size:0.75rem; color:#999; margin-bottom:10px; letter-spacing:0.04em; }
+    .pop-story    { font-size:0.88rem; color:#444; line-height:1.6; margin-bottom:8px; }
+    .pop-special  { font-style:italic; font-size:0.88rem; color:#555; line-height:1.6; border-left:3px solid #f2a7c3; padding-left:10px; }
+    .pulse-ring   { width:20px; height:20px; border-radius:50%; background:rgba(242,167,195,0.4); border:2px solid #f2a7c3; animation:pulse 1.5s ease-out infinite; }
+    @keyframes pulse { 0%{transform:scale(1);opacity:1} 100%{transform:scale(2.5);opacity:0} }
+    .leaflet-popup-content-wrapper { border-radius:14px !important; box-shadow:0 8px 32px rgba(0,0,0,0.2) !important; }
+    .leaflet-popup-tip { display:none; }
+    .dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); transition:background 0.4s,transform 0.4s; display:inline-block; }
+    .dot.active { background:#f2a7c3; transform:scale(1.4); }
+    .dot.done   { background:rgba(242,167,195,0.5); }
+    </style>
 </body>
 </html>

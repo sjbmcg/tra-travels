@@ -238,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const res = await fetch(`/api/memories/${editingId}`, { method: 'PUT', body: formData });
             const updated = await res.json();
             createBlogPost(updated);
+            updateMarkerPopup(updated);
             sortBlogPosts();
         } else {
             formData.append("lat", selectedLat);

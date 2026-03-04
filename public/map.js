@@ -54,7 +54,16 @@ function createMarker(location) {
     markers[location.id] = marker;
 }
 
-function removeMarker(id) {
+function updateMarkerPopup(location) {
+    const marker = markers[location.id];
+    if (!marker) return;
+    const popupContent = location.photo_url
+        ? `<b>${location.location_name}</b><br><img src="${location.photo_url}" style="width:120px;border-radius:6px;margin-top:6px;">`
+        : `<b>${location.location_name}</b><br>${location.what_happened}`;
+    marker.setPopupContent(popupContent);
+}
+
+function deleteMemory(id) {
     if (markers[id]) {
         map.removeLayer(markers[id]);
         delete markers[id];
@@ -92,7 +101,26 @@ function updateStats() {
     if (journeyBtn) journeyBtn.style.display = count >= 5 ? 'inline-block' : 'none';
 }
 
-async function addLocation(formData) {
+function renderYearFilter() {
+    const years = [...new Set(locations.map(l => new Date(l.date_visited).getFullYear()))].sort((a,b) => b - a);
+    const filter = document.getElementById('yearFilter');
+    if (years.length < 2) { filter.style.display = 'none'; return; }
+
+    filter.style.display = 'flex';
+    filter.innerHTML = ['All', ...years].map(y => `
+        <button class="year-btn ${y === 'All' ? 'active' : ''}" onclick="filterByYear('${y}')">${y}</button>
+    `).join('');
+}
+
+function filterByYear(year) {
+    document.querySelectorAll('.year-btn').forEach(b => b.classList.toggle('active', b.textContent == year));
+    document.querySelectorAll('.blog-post').forEach(post => {
+        const postYear = new Date(post.dataset.date).getFullYear().toString();
+        post.style.display = (year === 'All' || postYear === year.toString()) ? 'block' : 'none';
+    });
+}
+
+async function saveMemory(formData) {
     const response = await fetch('/api/memories', { method: 'POST', body: formData });
     if (response.status === 401) { window.location.href = '/login.html'; return; }
     const saved = await response.json();
@@ -101,6 +129,7 @@ async function addLocation(formData) {
     createMarker(location);
     updateRoute();
     updateStats();
+    renderYearFilter();
     createBlogPost(location);
     sortBlogPosts();
 }
@@ -127,6 +156,7 @@ window.onload = async function () {
         updateRoute();
         fitMapToMemories();
         sortBlogPosts();
+        renderYearFilter();
     }
 
     updateStats();
