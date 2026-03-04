@@ -379,3 +379,29 @@ input[type="file"] {
     background: #fde8e8;
     color: #c0392b;
 }
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--ink);
+    opacity: 0.5;
+    font-family: 'Sawarabi Mincho', serif;
+    line-height: 2;
+}
+
+.empty-state p:first-child {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+}
+
+/* Memory count in nav */
+.memory-count {
+    font-size: 0.8rem;
+    background: var(--sakura);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-right: 10px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+}
