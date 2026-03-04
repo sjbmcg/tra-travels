@@ -185,10 +185,12 @@ ul li a:hover { color: var(--sakura); }
 
 .modal-content {
     background: white;
-    margin: 6% auto;
+    margin: 4% auto;
     padding: 32px;
     width: 90%;
     max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(44,44,84,0.2);
     border-top: 4px solid var(--sakura);
