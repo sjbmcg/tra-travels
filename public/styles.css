@@ -574,7 +574,8 @@ input[type="file"] {
 
 /* ── About Page ─────────────────────────────────────────── */
 .about-section {
-    background: white;
+    background: var(--paper);
+    border: 1px solid rgba(242,167,195,0.3);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
