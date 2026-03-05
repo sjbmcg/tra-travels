@@ -97,6 +97,8 @@
 
         .leaflet-popup-content-wrapper { border-radius:14px !important; box-shadow:0 8px 32px rgba(0,0,0,0.2) !important; }
         .leaflet-popup-tip { display:none; }
+        #map { background: #0a0a0f; }
+        #map.leaflet-container { background: #0a0a0f; }
     </style>
 </head>
 <body>
@@ -147,7 +149,7 @@
 
         // Init dark map
         map = L.map('map', { zoomControl:false, attributionControl:false });
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19, keepBuffer:6 }).addTo(map);
 
         // Fit to all locations first
         const bounds = L.latLngBounds(memories.map(m => [m.lat, m.lng]));
@@ -215,7 +217,16 @@
             if (!isLast) {
                 setTimeout(() => {
                     map.closePopup();
-                    setTimeout(() => flyToStop(index + 1), 600);
+                    const overlay = document.getElementById('mapOverlay');
+                    overlay.style.transition = 'opacity 0.3s ease';
+                    overlay.style.opacity = '0.7';
+                    setTimeout(() => {
+                        flyToStop(index + 1);
+                        setTimeout(() => {
+                            overlay.style.transition = 'opacity 2s ease';
+                            overlay.style.opacity = '0';
+                        }, 600);
+                    }, 400);
                 }, 5000);
             }
 
