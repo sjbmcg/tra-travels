@@ -1051,7 +1051,7 @@ nav {
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.02em;
-    background: white;
-    color: var(--ink);
-    border: 1px solid var(--sakura);
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
 }
