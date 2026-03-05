@@ -148,7 +148,7 @@
 
         if (!jmap) {
             jmap = L.map('jmap', { zoomControl:false, attributionControl:false });
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(jmap);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19, keepBuffer:6 }).addTo(jmap);
         }
 
         // Overview fit
@@ -195,7 +195,19 @@
             if (routeCoords.length > 1) drawRoute();
 
             if (!isLast) {
-                setTimeout(() => { jmap.closePopup(); setTimeout(() => flyToStop(index+1), 600); }, 5000);
+                setTimeout(() => {
+                    jmap.closePopup();
+                    const overlay = document.getElementById('jmapOverlay');
+                    overlay.style.transition = 'opacity 0.3s ease';
+                    overlay.style.opacity = '0.7';
+                    setTimeout(() => {
+                        flyToStop(index + 1);
+                        setTimeout(() => {
+                            overlay.style.transition = 'opacity 2s ease';
+                            overlay.style.opacity = '0';
+                        }, 600);
+                    }, 400);
+                }, 5000);
             }
         }, 2800);
     }
@@ -246,6 +258,8 @@
     @keyframes pulse { 0%{transform:scale(1);opacity:1} 100%{transform:scale(2.5);opacity:0} }
     .leaflet-popup-content-wrapper { border-radius:14px !important; box-shadow:0 8px 32px rgba(0,0,0,0.2) !important; }
     .leaflet-popup-tip { display:none; }
+    #jmap { background: #0a0a0f; }
+    #jmap.leaflet-container { background: #0a0a0f; }
     .dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); transition:background 0.4s,transform 0.4s; display:inline-block; }
     .dot.active { background:#f2a7c3; transform:scale(1.4); }
     .dot.done   { background:rgba(242,167,195,0.5); }
